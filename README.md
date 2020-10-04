@@ -1,3 +1,3 @@
 # KiCore
 
-This is the Swift implementation of the Ki.Core standard library.
+A Swift implementation of the Ki.Core standard library.
