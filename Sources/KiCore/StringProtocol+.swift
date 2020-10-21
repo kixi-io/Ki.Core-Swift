@@ -140,6 +140,105 @@ public extension StringProtocol {
         return filter{ $0.isEmoji }.flatMap { $0.unicodeScalars }
     }
     
+    var lines: [String] {
+        return self.components(separatedBy: "\n")
+    }
+    
+    subscript(_ index:Int) -> Character {
+        return self[self.index(startIndex, offsetBy: index)]
+    }
+    
+    subscript(_ range: CountableRange<Int>) -> String {
+        let start = index(startIndex, offsetBy: Swift.max(0, range.lowerBound))
+        let end = index(start, offsetBy: Swift.min(self.count - range.lowerBound,
+                                             range.upperBound - range.lowerBound))
+        return String(self[start..<end])
+    }
+    
+    subscript(_ range: CountableClosedRange<Int>) -> String {
+        let start = index(startIndex, offsetBy: Swift.max(0, range.lowerBound))
+        let end = index(start, offsetBy: Swift.min(self.count - range.lowerBound,
+                                             range.upperBound - range.lowerBound))
+        return String(self[start...end])
+    }
+
+    subscript(_ range: CountablePartialRangeFrom<Int>) -> String {
+        let start = index(startIndex, offsetBy: Swift.max(0, range.lowerBound))
+         return String(self[start...])
+    }
+    
+    func removePrefix(_ prefix: String) -> String {
+        guard self.hasPrefix(prefix) else { return self as? String ?? self.description }
+        return String(self.dropFirst(prefix.count))
+    }
+    
+    func removeSuffix(_ suffix: String) -> String {
+        guard self.hasSuffix(suffix) else { return self as? String ?? self.description }
+        return String(self.dropLast(suffix.count))
+    }
+    
+    /**
+     * Resolve escapes within a string. For example, the text `\t` will be converted into a
+     * tab. This also handles unicode escapes in the form `\uxxxx`, where `x` is a
+     * hexidecimal digit.
+     */
+    func resolveEscapes(quoteChar: Character? = "\"") throws -> String {
+        var escape = false
+        var sb = ""
+
+        var index = 0
+
+        outer: while(index<count) {
+
+            let c = chars[index]
+
+            if(escape) {
+                switch(c) {
+                    case "t": sb.append("\t")
+                    case "r": sb.append("\r")
+                    case "n": sb.append("\n")
+                    case "u":
+                        if count < index + 5 {
+                                throw ParseError(
+                                    """
+                                    Unicode escape requires four hexidecimal
+                                    digits. Got \(self[index...]))
+                                    """
+                                )
+                        }
+                        index+=1
+                        let hexDigits = self[index..<index+4]
+                        let charInt = Int(hexDigits, radix: 16)
+                        if(charInt == nil) {
+                            throw ParseError("Invalid hex code in \\u escape \(hexDigits)", index:index)
+                        }
+                        
+                        let scalar = UnicodeScalar(charInt!)
+                        if(scalar == nil) {
+                            throw ParseError("Invalid unicode escape \(hexDigits)", index:index)
+                        }
+                        
+                        sb.append(String(scalar!))
+
+                        index+=4
+                        escape = false
+                        continue outer
+                    case "\\": sb.append("\\")
+                    case quoteChar: if quoteChar != nil { sb.append(quoteChar!) }
+                    default: throw ParseError("Invalid escape char \(c)")
+                }
+                escape = false
+            } else if(c=="\\") {
+                escape = true
+            } else {
+                sb.append(c)
+            }
+            index += 1
+        }
+
+        return (quoteChar == nil) ? sb : sb.description.replaceAll("\\\(String(describing: quoteChar))",
+                                                                   "\(String(describing: quoteChar))")
+    }
 }
 
 
