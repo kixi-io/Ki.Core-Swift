@@ -1,4 +1,4 @@
-// String+Ki.swift
+// Text+.swift
 // Ki.Core-Swift
 //
 // Copyright © 2026 Kixi. MIT License.
@@ -165,8 +165,16 @@ extension Character {
     /// Returns `true` if this character is an emoji.
     ///
     /// This is a simplified check that covers common emoji ranges.
+    /// Note: Excludes ASCII characters (like digits 0-9) that technically have the
+    /// Unicode Emoji property but shouldn't be treated as emoji for identifier purposes.
     public var isEmoji: Bool {
         guard let scalar = unicodeScalars.first else { return false }
+        
+        // Exclude basic ASCII - digits 0-9 have Emoji=Yes in Unicode but aren't
+        // what we consider "emoji" for identifier purposes
+        if scalar.value < 0x80 {
+            return false
+        }
         
         // Check various emoji ranges
         switch scalar.value {
