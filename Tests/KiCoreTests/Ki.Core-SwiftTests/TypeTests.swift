@@ -224,9 +224,15 @@ struct KiTypeTests {
             #expect(KiType.typeOf(value) == .int)
         }
         
-        @Test("detects Int as long")
-        func detectsInt() {
+        @Test("detects Int in Int32 range as int")
+        func detectsIntInInt32Range() {
             let value: Int = 42
+            #expect(KiType.typeOf(value) == .int)
+        }
+        
+        @Test("detects Int outside Int32 range as long")
+        func detectsIntOutsideInt32Range() {
+            let value: Int = Int(Int32.max) + 1
             #expect(KiType.typeOf(value) == .long)
         }
         
@@ -576,9 +582,15 @@ struct TypeDefTests {
             #expect(TypeDef.int.matches(value))
         }
         
-        @Test("long matches Int")
-        func longMatchesInt() {
+        @Test("int matches Int in Int32 range")
+        func intMatchesIntInRange() {
             let value: Int = 42
+            #expect(TypeDef.int.matches(value))
+        }
+        
+        @Test("long matches Int outside Int32 range")
+        func longMatchesIntOutsideRange() {
+            let value: Int = Int(Int32.max) + 1
             #expect(TypeDef.long.matches(value))
         }
         
@@ -790,11 +802,28 @@ struct TypeDefTests {
     @Suite("inferCollectionType")
     struct InferCollectionType {
         
-        @Test("infers type from homogeneous Int array")
+        @Test("infers type from homogeneous Int32 array")
+        func infersFromHomogeneousInt32Array() {
+            let values: [Any?] = [Int32(1), Int32(2), Int32(3)]
+            let inferred = TypeDef.inferCollectionType(values)
+            #expect(inferred.type == .int)
+            #expect(!inferred.nullable)
+        }
+        
+        @Test("infers type from homogeneous Int array in Int32 range")
         func infersFromHomogeneousIntArray() {
             let values: [Any?] = [1 as Int, 2 as Int, 3 as Int]
             let inferred = TypeDef.inferCollectionType(values)
-            #expect(inferred.type == .long)  // Int maps to long
+            #expect(inferred.type == .int)  // Values in Int32 range map to int
+            #expect(!inferred.nullable)
+        }
+        
+        @Test("infers long from Int array outside Int32 range")
+        func infersLongFromLargeIntArray() {
+            let largeValue: Int = Int(Int32.max) + 1
+            let values: [Any?] = [largeValue]
+            let inferred = TypeDef.inferCollectionType(values)
+            #expect(inferred.type == .long)
             #expect(!inferred.nullable)
         }
         
@@ -813,7 +842,7 @@ struct TypeDefTests {
         func infersNullableWithNil() {
             let values: [Any?] = [1 as Int, nil, 3 as Int]
             let inferred = TypeDef.inferCollectionType(values)
-            #expect(inferred.type == .long)
+            #expect(inferred.type == .int)  // Values in Int32 range map to int
             #expect(inferred.nullable)
         }
         
@@ -1062,7 +1091,7 @@ struct MapDefTests {
         let mapDef = MapDef(nullable: false, keyDef: TypeDef.string, valueDef: TypeDef.long)
         let key1: String = "a"
         let key2: String = "b"
-        let value: [AnyHashable: Any?] = [key1: 1 as Int, key2: 2 as Int]
+        let value: [AnyHashable: Any?] = [key1: Int64(1), key2: Int64(2)]
         #expect(mapDef.matches(value))
     }
     
@@ -1243,4 +1272,3 @@ struct QuantityDefTests {
         #expect(endsWithQuestionMark)
     }
 }
-

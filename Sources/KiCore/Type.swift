@@ -151,7 +151,13 @@ public enum KiType: String, CaseIterable, Sendable {
             return .char
         case is Int32:
             return .int
-        case is Int, is Int64:
+        case let intValue as Int:
+            // Ki semantics: values in Int32 range are Int, larger values are Long
+            if intValue >= Int(Int32.min) && intValue <= Int(Int32.max) {
+                return .int
+            }
+            return .long
+        case is Int64:
             return .long
         case is Float:
             return .float
