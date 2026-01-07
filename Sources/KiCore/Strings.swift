@@ -151,10 +151,11 @@ public enum Strings {
         var content = String(trimmed[startIdx..<endIdx])
         
         // Handle opening newline
+        // Note: Swift treats CR+LF as a single grapheme cluster (one Character)
         if content.hasPrefix("\n") {
             content = String(content.dropFirst())
         } else if content.hasPrefix("\r\n") {
-            content = String(content.dropFirst(2))
+            content = String(content.dropFirst())  // CR+LF is one Character in Swift
         }
         
         // Process indentation stripping
@@ -193,10 +194,11 @@ public enum Strings {
         var content = String(trimmed[startIdx..<endIdx])
         
         // Handle opening newline
+        // Note: Swift treats CR+LF as a single grapheme cluster (one Character)
         if content.hasPrefix("\n") {
             content = String(content.dropFirst())
         } else if content.hasPrefix("\r\n") {
-            content = String(content.dropFirst(2))
+            content = String(content.dropFirst())  // CR+LF is one Character in Swift
         }
         
         // Process indentation stripping

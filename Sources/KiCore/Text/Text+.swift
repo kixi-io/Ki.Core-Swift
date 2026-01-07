@@ -263,6 +263,26 @@ extension String {
                 case "t": result.append("\t")
                 case "r": result.append("\r")
                 case "n": result.append("\n")
+                case "\r":
+                    // Line continuation: backslash followed by actual CR (and possibly LF)
+                    let nextIndex = self.index(after: index)
+                    if nextIndex < endIndex && self[nextIndex] == "\n" {
+                        index = nextIndex  // Skip the LF as well; will be advanced at end of loop
+                    }
+                    // Skip leading whitespace on continued line
+                    var peekIndex = self.index(after: index)
+                    while peekIndex < endIndex && (self[peekIndex] == " " || self[peekIndex] == "\t") {
+                        index = peekIndex
+                        peekIndex = self.index(after: peekIndex)
+                    }
+                case "\n":
+                    // Line continuation: backslash followed by actual LF
+                    // Skip leading whitespace on continued line
+                    var peekIndex = self.index(after: index)
+                    while peekIndex < endIndex && (self[peekIndex] == " " || self[peekIndex] == "\t") {
+                        index = peekIndex
+                        peekIndex = self.index(after: peekIndex)
+                    }
                 case "u":
                     // Unicode escape: \uXXXX
                     let nextIndex = self.index(index, offsetBy: 1)
