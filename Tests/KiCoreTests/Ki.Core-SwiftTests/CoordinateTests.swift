@@ -252,8 +252,8 @@ struct CoordinateRangeTests {
 
 // MARK: - GeoPoint Tests
 
-@Suite("GeoPoint")
-struct GeoPointTests {
+@Suite("Simple GeoPoint")
+struct SimpleGeoPointTests {
     
     @Suite("Creation")
     struct Creation {
