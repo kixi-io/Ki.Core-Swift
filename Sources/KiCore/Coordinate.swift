@@ -11,17 +11,23 @@ import Foundation
 ///
 /// ## Standard Notation (Zero-Based)
 /// Programmer-friendly x, y coordinates starting from 0:
+/// ```swift
+/// Coordinate(x: 0, y: 0)       // Top-left cell
+/// Coordinate(x: 4, y: 0)       // Fifth column, first row
+/// Coordinate(x: 0, y: 0, z: 1) // With depth
 /// ```
-/// Coordinate.standard(x: 0, y: 0)    // Top-left cell
-/// Coordinate.standard(x: 4, y: 0)    // Fifth column, first row
+///
+/// For input validation with error handling, use the factory method:
+/// ```swift
+/// try Coordinate.standard(x: userInput, y: 0)  // Throws on invalid input
 /// ```
 ///
 /// ## Sheet Notation (Letter Column, One-Based Row)
 /// Spreadsheet-style addressing with letter columns (A, B, ..., Z, AA, AB, ...) and
 /// one-based row numbers:
-/// ```
-/// Coordinate.sheet(c: "A", r: 1)   // Top-left cell (same as x=0, y=0)
-/// Coordinate.sheet(c: "E", r: 1)   // Fifth column, first row (same as x=4, y=0)
+/// ```swift
+/// try Coordinate.sheet(c: "A", r: 1)   // Top-left cell (same as x=0, y=0)
+/// try Coordinate.sheet(c: "E", r: 1)   // Fifth column, first row (same as x=4, y=0)
 /// ```
 ///
 /// ## String Parsing
@@ -46,25 +52,25 @@ public struct Coordinate: Sendable, Hashable, Comparable, CustomStringConvertibl
     
     /// Creates a Coordinate using standard zero-based (x, y) notation.
     ///
+    /// For known-valid coordinates, use this initializer directly.
+    /// For input validation with error handling, use `Coordinate.standard(x:y:z:)`.
+    ///
     /// - Parameters:
-    ///   - x: The zero-based column index
-    ///   - y: The zero-based row index
-    ///   - z: Optional zero-based depth index
-    /// - Throws: `KiError` if any coordinate is negative
-    private init(x: Int, y: Int, z: Int? = nil) throws {
-        guard x >= 0 else {
-            let msg: String = "x must be non-negative, got: \(x)"
-            throw KiError.general(msg)
-        }
-        guard y >= 0 else {
-            let msg: String = "y must be non-negative, got: \(y)"
-            throw KiError.general(msg)
-        }
+    ///   - x: The zero-based column index (must be non-negative)
+    ///   - y: The zero-based row index (must be non-negative)
+    ///   - z: Optional zero-based depth index (must be non-negative if provided)
+    /// - Precondition: All coordinates must be non-negative
+    ///
+    /// ## Example
+    /// ```swift
+    /// let coord = Coordinate(x: 2, y: 1)         // Column C, row 2 in sheet notation
+    /// let coord3D = Coordinate(x: 0, y: 0, z: 5) // With depth
+    /// ```
+    public init(x: Int, y: Int, z: Int? = nil) {
+        precondition(x >= 0, "x must be non-negative, got: \(x)")
+        precondition(y >= 0, "y must be non-negative, got: \(y)")
         if let z = z {
-            guard z >= 0 else {
-                let msg: String = "z must be non-negative, got: \(z)"
-                throw KiError.general(msg)
-            }
+            precondition(z >= 0, "z must be non-negative, got: \(z)")
         }
         self.x = x
         self.y = y
@@ -107,8 +113,13 @@ public struct Coordinate: Sendable, Hashable, Comparable, CustomStringConvertibl
     // MARK: - Modification Methods
     
     /// Returns a new Coordinate with the specified z value.
+    /// - Throws: `KiError` if z is negative
     public func withZ(_ z: Int) throws -> Coordinate {
-        try Coordinate(x: x, y: y, z: z)
+        guard z >= 0 else {
+            let msg: String = "z must be non-negative, got: \(z)"
+            throw KiError.general(msg)
+        }
+        return Coordinate(validX: x, validY: y, validZ: z)
     }
     
     /// Returns a new Coordinate without the z value.
@@ -232,13 +243,30 @@ public struct Coordinate: Sendable, Hashable, Comparable, CustomStringConvertibl
     
     /// Creates a Coordinate using standard zero-based (x, y) notation.
     ///
+    /// Use this factory method when you need to validate input and handle errors gracefully.
+    /// For known-valid coordinates, use the initializer directly: `Coordinate(x: 0, y: 0)`
+    ///
     /// - Parameters:
     ///   - x: The zero-based column index
     ///   - y: The zero-based row index
     ///   - z: Optional zero-based depth index
     /// - Throws: `KiError` if any coordinate is negative
     public static func standard(x: Int, y: Int, z: Int? = nil) throws -> Coordinate {
-        try Coordinate(x: x, y: y, z: z)
+        guard x >= 0 else {
+            let msg: String = "x must be non-negative, got: \(x)"
+            throw KiError.general(msg)
+        }
+        guard y >= 0 else {
+            let msg: String = "y must be non-negative, got: \(y)"
+            throw KiError.general(msg)
+        }
+        if let z = z {
+            guard z >= 0 else {
+                let msg: String = "z must be non-negative, got: \(z)"
+                throw KiError.general(msg)
+            }
+        }
+        return Coordinate(validX: x, validY: y, validZ: z)
     }
     
     /// Creates a Coordinate using sheet notation (letter column, one-based row).
@@ -257,10 +285,16 @@ public struct Coordinate: Sendable, Hashable, Comparable, CustomStringConvertibl
             let msg: String = "Row must be at least 1 (one-based), got: \(r)"
             throw KiError.general(msg)
         }
+        if let z = z {
+            guard z >= 0 else {
+                let msg: String = "z must be non-negative, got: \(z)"
+                throw KiError.general(msg)
+            }
+        }
         
         let x = columnToIndex(c)
         let y = r - 1
-        return try Coordinate(x: x, y: y, z: z)
+        return Coordinate(validX: x, validY: y, validZ: z)
     }
     
     // MARK: - Parsing
