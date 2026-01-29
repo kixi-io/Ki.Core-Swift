@@ -1348,4 +1348,5 @@ struct ConsistencyTests {
         #expect(try Strings.literalType(multilineInput) == .multiline)
         #expect(try Strings.literalType(rawMultilineInput) == .rawMultiline)
     }
+    
 }

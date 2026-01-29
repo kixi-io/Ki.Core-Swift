@@ -317,9 +317,9 @@ struct DictionaryNSIDKeyTests {
         
         @Test("returns entries in specified namespace")
         func returnsEntriesInNamespace() throws {
-            let uiWidth = try NSID("width", namespace: "ui")
-            let uiHeight = try NSID("height", namespace: "ui")
-            let title = try NSID("title")
+            let uiWidth = NSID("width", namespace: "ui")
+            let uiHeight = NSID("height", namespace: "ui")
+            let title = NSID("title")
             
             let dict: [NSID: Int] = [
                 uiWidth: 100,
@@ -337,7 +337,7 @@ struct DictionaryNSIDKeyTests {
         
         @Test("returns empty dictionary for non-existent namespace")
         func returnsEmptyForNonExistentNamespace() throws {
-            let name = try NSID("name")
+            let name = NSID("name")
             let dict: [NSID: String] = [name: "test"]
             
             let nonExistent: String = "nonexistent"
@@ -357,10 +357,10 @@ struct DictionaryNSIDKeyTests {
         
         @Test("filters correctly with multiple namespaces")
         func filtersCorrectlyWithMultipleNamespaces() throws {
-            let uiColor = try NSID("color", namespace: "ui")
-            let dataName = try NSID("name", namespace: "data")
-            let dataAge = try NSID("age", namespace: "data")
-            let simple = try NSID("simple")
+            let uiColor = NSID("color", namespace: "ui")
+            let dataName = NSID("name", namespace: "data")
+            let dataAge = NSID("age", namespace: "data")
+            let simple = NSID("simple")
             
             let colorValue: String = "red"
             let nameValue: String = "Alice"
@@ -383,9 +383,9 @@ struct DictionaryNSIDKeyTests {
         
         @Test("preserves value types")
         func preservesValueTypes() throws {
-            let strKey = try NSID("str", namespace: "test")
-            let intKey = try NSID("int", namespace: "test")
-            let boolKey = try NSID("bool", namespace: "test")
+            let strKey = NSID("str", namespace: "test")
+            let intKey = NSID("int", namespace: "test")
+            let boolKey = NSID("bool", namespace: "test")
             
             let strValue: String = "hello"
             
@@ -409,9 +409,9 @@ struct DictionaryNSIDKeyTests {
         
         @Test("returns entries without namespace")
         func returnsEntriesWithoutNamespace() throws {
-            let simple = try NSID("simple")
-            let another = try NSID("another")
-            let namespaced = try NSID("namespaced", namespace: "ns")
+            let simple = NSID("simple")
+            let another = NSID("another")
+            let namespaced = NSID("namespaced", namespace: "ns")
             
             let dict: [NSID: Int] = [
                 simple: 1,
@@ -428,8 +428,8 @@ struct DictionaryNSIDKeyTests {
         
         @Test("returns empty when all entries have namespaces")
         func returnsEmptyWhenAllNamespaced() throws {
-            let ns1 = try NSID("key1", namespace: "ns")
-            let ns2 = try NSID("key2", namespace: "ns")
+            let ns1 = NSID("key1", namespace: "ns")
+            let ns2 = NSID("key2", namespace: "ns")
             
             let dict: [NSID: Int] = [ns1: 1, ns2: 2]
             let unnamespaced: [String: Int] = dict.unnamedspacedEntries
@@ -439,9 +439,9 @@ struct DictionaryNSIDKeyTests {
         
         @Test("returns all entries when none have namespaces")
         func returnsAllWhenNoneNamespaced() throws {
-            let key1 = try NSID("key1")
-            let key2 = try NSID("key2")
-            let key3 = try NSID("key3")
+            let key1 = NSID("key1")
+            let key2 = NSID("key2")
+            let key3 = NSID("key3")
             
             let dict: [NSID: Int] = [key1: 1, key2: 2, key3: 3]
             let unnamespaced: [String: Int] = dict.unnamedspacedEntries
@@ -463,10 +463,10 @@ struct DictionaryNSIDKeyTests {
         
         @Test("returns all unique namespaces")
         func returnsAllUniqueNamespaces() throws {
-            let ui1 = try NSID("width", namespace: "ui")
-            let ui2 = try NSID("height", namespace: "ui")
-            let data1 = try NSID("name", namespace: "data")
-            let simple = try NSID("simple")
+            let ui1 = NSID("width", namespace: "ui")
+            let ui2 = NSID("height", namespace: "ui")
+            let data1 = NSID("name", namespace: "data")
+            let simple = NSID("simple")
             
             let dict: [NSID: Int] = [
                 ui1: 100,
@@ -497,9 +497,9 @@ struct DictionaryNSIDKeyTests {
         
         @Test("returns single namespace when all same")
         func returnsSingleNamespaceWhenAllSame() throws {
-            let key1 = try NSID("a", namespace: "common")
-            let key2 = try NSID("b", namespace: "common")
-            let key3 = try NSID("c", namespace: "common")
+            let key1 = NSID("a", namespace: "common")
+            let key2 = NSID("b", namespace: "common")
+            let key3 = NSID("c", namespace: "common")
             
             let dict: [NSID: Int] = [key1: 1, key2: 2, key3: 3]
             let namespaces: Set<String> = dict.namespaces
@@ -511,7 +511,7 @@ struct DictionaryNSIDKeyTests {
         
         @Test("includes empty string for non-namespaced keys")
         func includesEmptyStringForNonNamespaced() throws {
-            let simple = try NSID("simple")
+            let simple = NSID("simple")
             let dict: [NSID: Int] = [simple: 1]
             let namespaces: Set<String> = dict.namespaces
             
@@ -641,7 +641,7 @@ struct MapEdgeCaseTests {
         
         @Test("entriesInNamespace with dotted names")
         func entriesInNamespaceWithDottedNames() throws {
-            let dotted = try NSID("path.to.value", namespace: "config")
+            let dotted = NSID("path.to.value", namespace: "config")
             let dict: [NSID: Int] = [dotted: 42]
             
             let configNamespace: String = "config"
@@ -652,7 +652,7 @@ struct MapEdgeCaseTests {
         
         @Test("entriesInNamespace with unicode namespace")
         func entriesInNamespaceWithUnicodeNamespace() throws {
-            let unicode = try NSID("key", namespace: "日本語")
+            let unicode = NSID("key", namespace: "日本語")
             let dict: [NSID: Int] = [unicode: 42]
             
             let namespace: String = "日本語"
@@ -663,7 +663,7 @@ struct MapEdgeCaseTests {
         
         @Test("namespaces includes unicode namespaces")
         func namespacesIncludesUnicode() throws {
-            let unicode = try NSID("key", namespace: "日本語")
+            let unicode = NSID("key", namespace: "日本語")
             let dict: [NSID: Int] = [unicode: 42]
             
             let namespaces: Set<String> = dict.namespaces
@@ -709,10 +709,10 @@ struct IntegrationTests {
     
     @Test("NSID dictionary operations work together")
     func nsidDictionaryOperationsTogether() throws {
-        let uiWidth = try NSID("width", namespace: "ui")
-        let uiHeight = try NSID("height", namespace: "ui")
-        let dataName = try NSID("name", namespace: "data")
-        let simple = try NSID("simple")
+        let uiWidth = NSID("width", namespace: "ui")
+        let uiHeight = NSID("height", namespace: "ui")
+        let dataName = NSID("name", namespace: "data")
+        let simple = NSID("simple")
         
         let dict: [NSID: Int] = [
             uiWidth: 100,

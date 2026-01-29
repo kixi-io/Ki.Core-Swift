@@ -18,28 +18,28 @@ struct NSIDTests {
     struct InitializationTests {
         
         @Test("creates with simple name")
-        func createsWithSimpleName() throws {
+        func createsWithSimpleName() {
             let name: String = "tag"
-            let nsid = try NSID(name)
+            let nsid = NSID(name)
             
             #expect(nsid.name == "tag")
             #expect(nsid.namespace == "")
         }
         
         @Test("creates with name and namespace")
-        func createsWithNameAndNamespace() throws {
+        func createsWithNameAndNamespace() {
             let name: String = "tag"
             let namespace: String = "my"
-            let nsid = try NSID(name, namespace: namespace)
+            let nsid = NSID(name, namespace: namespace)
             
             #expect(nsid.name == "tag")
             #expect(nsid.namespace == "my")
         }
         
         @Test("creates with empty name (anonymous)")
-        func createsAnonymous() throws {
+        func createsAnonymous() {
             let emptyName: String = ""
-            let nsid = try NSID(emptyName)
+            let nsid = NSID(emptyName)
             
             #expect(nsid.name == "")
             #expect(nsid.namespace == "")
@@ -56,93 +56,136 @@ struct NSIDTests {
         }
         
         @Test("throws on namespace without name")
-        func throwsOnNamespaceWithoutName() throws {
+        func throwsOnNamespaceWithoutName() {
             let emptyName: String = ""
             let namespace: String = "my"
             #expect(throws: ParseError.self) {
-                try NSID(emptyName, namespace: namespace)
+                try NSID(validating: emptyName, namespace: namespace)
             }
         }
         
         @Test("throws on invalid name")
-        func throwsOnInvalidName() throws {
+        func throwsOnInvalidName() {
             let invalidName: String = "123invalid"
             #expect(throws: ParseError.self) {
-                try NSID(invalidName)
+                try NSID(validating: invalidName)
             }
         }
         
         @Test("throws on invalid namespace")
-        func throwsOnInvalidNamespace() throws {
+        func throwsOnInvalidNamespace() {
             let validName: String = "tag"
             let invalidNamespace: String = "123invalid"
             #expect(throws: ParseError.self) {
-                try NSID(validName, namespace: invalidNamespace)
+                try NSID(validating: validName, namespace: invalidNamespace)
             }
         }
         
         @Test("throws on name starting with dollar sign")
-        func throwsOnNameStartingWithDollar() throws {
+        func throwsOnNameStartingWithDollar() {
             let dollarName: String = "$invalid"
             #expect(throws: ParseError.self) {
-                try NSID(dollarName)
+                try NSID(validating: dollarName)
             }
         }
         
         @Test("allows dollar sign in middle of name")
-        func allowsDollarInMiddle() throws {
+        func allowsDollarInMiddle() {
             let nameWithDollar: String = "my$var"
-            let nsid = try NSID(nameWithDollar)
+            let nsid = NSID(nameWithDollar)
             
             #expect(nsid.name == "my$var")
         }
         
         @Test("allows underscore at start")
-        func allowsUnderscoreAtStart() throws {
+        func allowsUnderscoreAtStart() {
             let underscoreName: String = "_private"
-            let nsid = try NSID(underscoreName)
+            let nsid = NSID(underscoreName)
             
             #expect(nsid.name == "_private")
         }
         
         @Test("throws on single underscore (reserved)")
-        func throwsOnSingleUnderscore() throws {
+        func throwsOnSingleUnderscore() {
             let singleUnderscore: String = "_"
             #expect(throws: ParseError.self) {
-                try NSID(singleUnderscore)
+                try NSID(validating: singleUnderscore)
             }
         }
         
         @Test("allows dots in name for KD-style paths")
-        func allowsDotsInName() throws {
+        func allowsDotsInName() {
             let dottedName: String = "path.to.element"
-            let nsid = try NSID(dottedName)
+            let nsid = NSID(dottedName)
             
             #expect(nsid.name == "path.to.element")
         }
         
         @Test("allows unicode letters in name")
-        func allowsUnicodeLetters() throws {
+        func allowsUnicodeLetters() {
             let unicodeName: String = "日本語"
-            let nsid = try NSID(unicodeName)
+            let nsid = NSID(unicodeName)
             
             #expect(nsid.name == "日本語")
         }
         
         @Test("allows emoji in name")
-        func allowsEmojiInName() throws {
+        func allowsEmojiInName() {
             let emojiName: String = "🎉party"
-            let nsid = try NSID(emojiName)
+            let nsid = NSID(emojiName)
             
             #expect(nsid.name == "🎉party")
         }
         
         @Test("allows numbers after first character")
-        func allowsNumbersAfterFirst() throws {
+        func allowsNumbersAfterFirst() {
             let nameWithNumbers: String = "tag123"
-            let nsid = try NSID(nameWithNumbers)
+            let nsid = NSID(nameWithNumbers)
             
             #expect(nsid.name == "tag123")
+        }
+    }
+    
+    // MARK: - Validating Initializer Tests
+    
+    @Suite("Validating Initializer")
+    struct ValidatingInitializerTests {
+        
+        @Test("validating initializer accepts valid name")
+        func validatingAcceptsValidName() throws {
+            let nsid = try NSID(validating: "validName")
+            
+            #expect(nsid.name == "validName")
+            #expect(nsid.namespace == "")
+        }
+        
+        @Test("validating initializer accepts valid name and namespace")
+        func validatingAcceptsValidNameAndNamespace() throws {
+            let nsid = try NSID(validating: "tag", namespace: "myNs")
+            
+            #expect(nsid.name == "tag")
+            #expect(nsid.namespace == "myNs")
+        }
+        
+        @Test("validating initializer throws on invalid name")
+        func validatingThrowsOnInvalidName() {
+            #expect(throws: ParseError.self) {
+                try NSID(validating: "123invalid")
+            }
+        }
+        
+        @Test("validating initializer throws on invalid namespace")
+        func validatingThrowsOnInvalidNamespace() {
+            #expect(throws: ParseError.self) {
+                try NSID(validating: "valid", namespace: "123invalid")
+            }
+        }
+        
+        @Test("validating initializer accepts empty for anonymous")
+        func validatingAcceptsEmptyForAnonymous() throws {
+            let nsid = try NSID(validating: "")
+            
+            #expect(nsid.isAnonymous)
         }
     }
     
@@ -157,26 +200,26 @@ struct NSIDTests {
         }
         
         @Test("isAnonymous returns false for named NSID")
-        func isAnonymousFalse() throws {
+        func isAnonymousFalse() {
             let name: String = "tag"
-            let nsid = try NSID(name)
+            let nsid = NSID(name)
             
             #expect(!nsid.isAnonymous)
         }
         
         @Test("hasNamespace returns true when namespace present")
-        func hasNamespaceTrue() throws {
+        func hasNamespaceTrue() {
             let name: String = "tag"
             let namespace: String = "my"
-            let nsid = try NSID(name, namespace: namespace)
+            let nsid = NSID(name, namespace: namespace)
             
             #expect(nsid.hasNamespace)
         }
         
         @Test("hasNamespace returns false when no namespace")
-        func hasNamespaceFalse() throws {
+        func hasNamespaceFalse() {
             let name: String = "tag"
-            let nsid = try NSID(name)
+            let nsid = NSID(name)
             
             #expect(!nsid.hasNamespace)
         }
@@ -332,18 +375,18 @@ struct NSIDTests {
     struct DescriptionTests {
         
         @Test("description for simple name")
-        func descriptionSimpleName() throws {
+        func descriptionSimpleName() {
             let name: String = "tag"
-            let nsid = try NSID(name)
+            let nsid = NSID(name)
             
             #expect(nsid.description == "tag")
         }
         
         @Test("description for namespaced name")
-        func descriptionNamespacedName() throws {
+        func descriptionNamespacedName() {
             let name: String = "tag"
             let namespace: String = "my"
-            let nsid = try NSID(name, namespace: namespace)
+            let nsid = NSID(name, namespace: namespace)
             
             #expect(nsid.description == "my:tag")
         }
@@ -354,18 +397,18 @@ struct NSIDTests {
         }
         
         @Test("description for dotted name")
-        func descriptionDottedName() throws {
+        func descriptionDottedName() {
             let name: String = "path.to.element"
-            let nsid = try NSID(name)
+            let nsid = NSID(name)
             
             #expect(nsid.description == "path.to.element")
         }
         
         @Test("description for namespaced dotted name")
-        func descriptionNamespacedDottedName() throws {
+        func descriptionNamespacedDottedName() {
             let name: String = "path.to.element"
             let namespace: String = "config"
-            let nsid = try NSID(name, namespace: namespace)
+            let nsid = NSID(name, namespace: namespace)
             
             #expect(nsid.description == "config:path.to.element")
         }
@@ -377,22 +420,22 @@ struct NSIDTests {
     struct HashableTests {
         
         @Test("equal NSIDs have equal hashes")
-        func equalHashes() throws {
+        func equalHashes() {
             let name: String = "tag"
             let namespace: String = "my"
-            let nsid1 = try NSID(name, namespace: namespace)
-            let nsid2 = try NSID(name, namespace: namespace)
+            let nsid1 = NSID(name, namespace: namespace)
+            let nsid2 = NSID(name, namespace: namespace)
             
             #expect(nsid1.hashValue == nsid2.hashValue)
         }
         
         @Test("works in Set")
-        func worksInSet() throws {
+        func worksInSet() {
             let name1: String = "tag1"
             let name2: String = "tag2"
-            let nsid1 = try NSID(name1)
-            let nsid2 = try NSID(name2)
-            let nsid3 = try NSID(name1)  // Duplicate of nsid1
+            let nsid1 = NSID(name1)
+            let nsid2 = NSID(name2)
+            let nsid3 = NSID(name1)  // Duplicate of nsid1
             
             let set: Set<NSID> = [nsid1, nsid2, nsid3]
             
@@ -400,11 +443,11 @@ struct NSIDTests {
         }
         
         @Test("works as Dictionary key")
-        func worksAsDictionaryKey() throws {
+        func worksAsDictionaryKey() {
             let name1: String = "key1"
             let name2: String = "key2"
-            let nsid1 = try NSID(name1)
-            let nsid2 = try NSID(name2)
+            let nsid1 = NSID(name1)
+            let nsid2 = NSID(name2)
             
             var dict: [NSID: String] = [:]
             let value1: String = "value1"
@@ -417,12 +460,12 @@ struct NSIDTests {
         }
         
         @Test("different namespaces have different hashes")
-        func differentNamespacesHaveDifferentHashes() throws {
+        func differentNamespacesHaveDifferentHashes() {
             let name: String = "tag"
             let ns1: String = "ns1"
             let ns2: String = "ns2"
-            let nsid1 = try NSID(name, namespace: ns1)
-            let nsid2 = try NSID(name, namespace: ns2)
+            let nsid1 = NSID(name, namespace: ns1)
+            let nsid2 = NSID(name, namespace: ns2)
             
             // Different namespaces should (usually) have different hashes
             // Note: Hash collisions are possible but unlikely
@@ -436,50 +479,50 @@ struct NSIDTests {
     struct EquatableTests {
         
         @Test("equal NSIDs are equal")
-        func equalNSIDsAreEqual() throws {
+        func equalNSIDsAreEqual() {
             let name: String = "tag"
             let namespace: String = "my"
-            let nsid1 = try NSID(name, namespace: namespace)
-            let nsid2 = try NSID(name, namespace: namespace)
+            let nsid1 = NSID(name, namespace: namespace)
+            let nsid2 = NSID(name, namespace: namespace)
             
             #expect(nsid1 == nsid2)
         }
         
         @Test("different names are not equal")
-        func differentNamesNotEqual() throws {
+        func differentNamesNotEqual() {
             let name1: String = "tag1"
             let name2: String = "tag2"
-            let nsid1 = try NSID(name1)
-            let nsid2 = try NSID(name2)
+            let nsid1 = NSID(name1)
+            let nsid2 = NSID(name2)
             
             #expect(nsid1 != nsid2)
         }
         
         @Test("different namespaces are not equal")
-        func differentNamespacesNotEqual() throws {
+        func differentNamespacesNotEqual() {
             let name: String = "tag"
             let ns1: String = "ns1"
             let ns2: String = "ns2"
-            let nsid1 = try NSID(name, namespace: ns1)
-            let nsid2 = try NSID(name, namespace: ns2)
+            let nsid1 = NSID(name, namespace: ns1)
+            let nsid2 = NSID(name, namespace: ns2)
             
             #expect(nsid1 != nsid2)
         }
         
         @Test("namespaced vs non-namespaced are not equal")
-        func namespacedVsNonNamespacedNotEqual() throws {
+        func namespacedVsNonNamespacedNotEqual() {
             let name: String = "tag"
             let namespace: String = "my"
-            let nsid1 = try NSID(name)
-            let nsid2 = try NSID(name, namespace: namespace)
+            let nsid1 = NSID(name)
+            let nsid2 = NSID(name, namespace: namespace)
             
             #expect(nsid1 != nsid2)
         }
         
         @Test("anonymous equals anonymous")
-        func anonymousEqualsAnonymous() throws {
+        func anonymousEqualsAnonymous() {
             let empty: String = ""
-            let anon1 = try NSID(empty)
+            let anon1 = NSID(empty)
             let anon2 = NSID.anonymous
             
             #expect(anon1 == anon2)
@@ -492,34 +535,34 @@ struct NSIDTests {
     struct ComparableTests {
         
         @Test("compares by description")
-        func comparesByDescription() throws {
+        func comparesByDescription() {
             let nameA: String = "apple"
             let nameB: String = "banana"
-            let nsidA = try NSID(nameA)
-            let nsidB = try NSID(nameB)
+            let nsidA = NSID(nameA)
+            let nsidB = NSID(nameB)
             
             #expect(nsidA < nsidB)
         }
         
         @Test("namespaced comes after non-namespaced with same name")
-        func namespacedAfterNonNamespaced() throws {
+        func namespacedAfterNonNamespaced() {
             let name: String = "tag"
             let namespace: String = "z"
-            let nsid1 = try NSID(name)
-            let nsid2 = try NSID(name, namespace: namespace)
+            let nsid1 = NSID(name)
+            let nsid2 = NSID(name, namespace: namespace)
             
             // "tag" < "z:tag" because 't' < 'z'
             #expect(nsid1 < nsid2)
         }
         
         @Test("sorting works correctly")
-        func sortingWorks() throws {
+        func sortingWorks() {
             let nameC: String = "charlie"
             let nameA: String = "alpha"
             let nameB: String = "bravo"
-            let nsidC = try NSID(nameC)
-            let nsidA = try NSID(nameA)
-            let nsidB = try NSID(nameB)
+            let nsidC = NSID(nameC)
+            let nsidA = NSID(nameA)
+            let nsidB = NSID(nameB)
             
             let sorted = [nsidC, nsidA, nsidB].sorted()
             
@@ -529,13 +572,13 @@ struct NSIDTests {
         }
         
         @Test("sorting with namespaces")
-        func sortingWithNamespaces() throws {
+        func sortingWithNamespaces() {
             let nameTag: String = "tag"
             let nsA: String = "a"
             let nsB: String = "b"
-            let nsidNoNs = try NSID(nameTag)
-            let nsidA = try NSID(nameTag, namespace: nsA)
-            let nsidB = try NSID(nameTag, namespace: nsB)
+            let nsidNoNs = NSID(nameTag)
+            let nsidA = NSID(nameTag, namespace: nsA)
+            let nsidB = NSID(nameTag, namespace: nsB)
             
             let sorted = [nsidB, nsidNoNs, nsidA].sorted()
             
@@ -552,9 +595,9 @@ struct NSIDTests {
     struct SendableTests {
         
         @Test("conforms to Sendable")
-        func conformsToSendable() throws {
+        func conformsToSendable() {
             let name: String = "tag"
-            let nsid = try NSID(name)
+            let nsid = NSID(name)
             let sendable: any Sendable = nsid
             
             #expect(sendable as? NSID == nsid)
@@ -567,95 +610,95 @@ struct NSIDTests {
     struct EdgeCaseTests {
         
         @Test("very long name")
-        func veryLongName() throws {
+        func veryLongName() {
             let longName: String = String(repeating: "a", count: 1000)
-            let nsid = try NSID(longName)
+            let nsid = NSID(longName)
             
             #expect(nsid.name == longName)
         }
         
         @Test("very long namespace")
-        func veryLongNamespace() throws {
+        func veryLongNamespace() {
             let name: String = "tag"
             let longNamespace: String = String(repeating: "b", count: 1000)
-            let nsid = try NSID(name, namespace: longNamespace)
+            let nsid = NSID(name, namespace: longNamespace)
             
             #expect(nsid.namespace == longNamespace)
         }
         
         @Test("name with mixed unicode")
-        func nameWithMixedUnicode() throws {
+        func nameWithMixedUnicode() {
             let mixedName: String = "abc日本語def"
-            let nsid = try NSID(mixedName)
+            let nsid = NSID(mixedName)
             
             #expect(nsid.name == "abc日本語def")
         }
         
         @Test("namespace with unicode")
-        func namespaceWithUnicode() throws {
+        func namespaceWithUnicode() {
             let name: String = "tag"
             let unicodeNamespace: String = "日本語"
-            let nsid = try NSID(name, namespace: unicodeNamespace)
+            let nsid = NSID(name, namespace: unicodeNamespace)
             
             #expect(nsid.namespace == "日本語")
         }
         
         @Test("name with emoji and text")
-        func nameWithEmojiAndText() throws {
+        func nameWithEmojiAndText() {
             let emojiName: String = "test🎉emoji🌍here"
-            let nsid = try NSID(emojiName)
+            let nsid = NSID(emojiName)
             
             #expect(nsid.name == "test🎉emoji🌍here")
         }
         
         @Test("namespace with emoji")
-        func namespaceWithEmoji() throws {
+        func namespaceWithEmoji() {
             let name: String = "tag"
             let emojiNamespace: String = "🎉fun"
-            let nsid = try NSID(name, namespace: emojiNamespace)
+            let nsid = NSID(name, namespace: emojiNamespace)
             
             #expect(nsid.namespace == "🎉fun")
         }
         
         @Test("name with multiple dots")
-        func nameWithMultipleDots() throws {
+        func nameWithMultipleDots() {
             let multiDotName: String = "a.b.c.d.e.f"
-            let nsid = try NSID(multiDotName)
+            let nsid = NSID(multiDotName)
             
             #expect(nsid.name == "a.b.c.d.e.f")
         }
         
         @Test("name starting with dot is allowed")
-        func nameStartingWithDotAllowed() throws {
+        func nameStartingWithDotAllowed() {
             // Dots are filtered before validation, so ".invalid" becomes "invalid" which is valid
             let dotStartName: String = ".invalid"
-            let nsid = try NSID(dotStartName)
+            let nsid = NSID(dotStartName)
             
             #expect(nsid.name == ".invalid")
         }
         
         @Test("name with only dots fails")
-        func nameWithOnlyDotsFails() throws {
+        func nameWithOnlyDotsFails() {
             let onlyDots: String = "..."
             #expect(throws: ParseError.self) {
-                try NSID(onlyDots)
+                try NSID(validating: onlyDots)
             }
         }
         
         @Test("name with trailing dot")
-        func nameWithTrailingDot() throws {
+        func nameWithTrailingDot() {
             let trailingDotName: String = "test."
             // This should work since dots are filtered and "test" is valid
-            let nsid = try NSID(trailingDotName)
+            let nsid = NSID(trailingDotName)
             
             #expect(nsid.name == "test.")
         }
         
         @Test("name with consecutive dots")
-        func nameWithConsecutiveDots() throws {
+        func nameWithConsecutiveDots() {
             let consecutiveDots: String = "a..b"
             // This should work since dots are filtered and "ab" is valid
-            let nsid = try NSID(consecutiveDots)
+            let nsid = NSID(consecutiveDots)
             
             #expect(nsid.name == "a..b")
         }
@@ -671,26 +714,26 @@ struct NSIDTests {
         }
         
         @Test("special characters in name are invalid")
-        func specialCharsInNameInvalid() throws {
+        func specialCharsInNameInvalid() {
             let specialChars: String = "tag@name"
             #expect(throws: ParseError.self) {
-                try NSID(specialChars)
+                try NSID(validating: specialChars)
             }
         }
         
         @Test("space in name is invalid")
-        func spaceInNameInvalid() throws {
+        func spaceInNameInvalid() {
             let nameWithSpace: String = "tag name"
             #expect(throws: ParseError.self) {
-                try NSID(nameWithSpace)
+                try NSID(validating: nameWithSpace)
             }
         }
         
         @Test("hyphen in name is invalid")
-        func hyphenInNameInvalid() throws {
+        func hyphenInNameInvalid() {
             let nameWithHyphen: String = "tag-name"
             #expect(throws: ParseError.self) {
-                try NSID(nameWithHyphen)
+                try NSID(validating: nameWithHyphen)
             }
         }
     }
@@ -753,6 +796,15 @@ struct NSIDTests {
             // be rejected by the public init for namespace-only case
             #expect(anon.name == "")
             #expect(anon.namespace == "")
+        }
+        
+        @Test("validated initializer bypasses validation")
+        func validatedInitializerBypassesValidation() {
+            // The validated: true initializer should accept anything
+            let nsid = NSID("anything", namespace: "here", validated: true)
+            
+            #expect(nsid.name == "anything")
+            #expect(nsid.namespace == "here")
         }
     }
 }

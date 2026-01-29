@@ -17,16 +17,19 @@ import Foundation
 ///
 /// ## Usage
 /// ```swift
-/// let simple = NSID(name: "tag")
-/// let namespaced = NSID(name: "tag", namespace: "my")
+/// let simple = NSID("tag")
+/// let namespaced = NSID("tag", namespace: "my")
 ///
 /// print(simple)      // "tag"
 /// print(namespaced)  // "my:tag"
 ///
-/// // Parse from string
-/// let parsed = NSID.parse("my:tag")
+/// // Parse from string (for user input)
+/// let parsed = try NSID.parse("my:tag")
 /// print(parsed.name)       // "tag"
 /// print(parsed.namespace)  // "my"
+///
+/// // Validating initializer (for user input)
+/// let userNsid = NSID(validating: userInput)
 /// ```
 public struct NSID: Hashable, Comparable, CustomStringConvertible, Sendable {
     
@@ -37,15 +40,64 @@ public struct NSID: Hashable, Comparable, CustomStringConvertible, Sendable {
     public let namespace: String
     
     /// Used for anonymous tags.
-    public static let anonymous = NSID("", namespace: "", validated: true)
+    public static let anonymous = NSID("", namespace: "")
+    
+    // MARK: - Initialization
     
     /// Creates a new NSID with the given name and optional namespace.
+    ///
+    /// - Precondition: The name and namespace must be valid Ki identifiers.
+    ///   For runtime validation of user input, use `init(validating:namespace:)`.
     ///
     /// - Parameters:
     ///   - name: The name component
     ///   - namespace: The namespace component (default: empty string)
-    /// - Throws: `ParseError` if the name or namespace is invalid
-    public init(_ name: String, namespace: String = "") throws {
+    public init(_ name: String, namespace: String = "") {
+        // Allow empty name for anonymous NSID
+        if name.isEmpty && namespace.isEmpty {
+            self.name = ""
+            self.namespace = ""
+            return
+        }
+        
+        // Validate: namespace without name is invalid
+        if !namespace.isEmpty && name.isEmpty {
+            preconditionFailure("Anonymous tags cannot have a namespace (\(namespace)).")
+        }
+
+        // Validate name (dots allowed for KD-style paths)
+        if !name.isEmpty {
+            let nameWithoutDots = String(name.filter { $0 != "." })
+            if !nameWithoutDots.isKiIdentifier {
+                preconditionFailure("NSID name component '\(name)' is not a valid Ki Identifier.")
+            }
+        }
+        
+        // Validate namespace
+        if !namespace.isEmpty && !namespace.isKiIdentifier {
+            preconditionFailure("NSID namespace component '\(namespace)' is not a valid Ki Identifier.")
+        }
+        
+        self.name = name
+        self.namespace = namespace
+    }
+    
+    /// Creates a new NSID with the given name and optional namespace, validating the input.
+    ///
+    /// Use this initializer when you need to validate user or external input at runtime.
+    ///
+    /// - Parameters:
+    ///   - name: The name component to validate and use
+    ///   - namespace: The namespace component to validate and use (default: empty string)
+    /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
+    public init(validating name: String, namespace: String = "") throws {
+        // Allow empty name for anonymous NSID
+        if name.isEmpty && namespace.isEmpty {
+            self.name = ""
+            self.namespace = ""
+            return
+        }
+        
         // Validate: namespace without name is invalid
         if !namespace.isEmpty && name.isEmpty {
             throw ParseError(message: "Anonymous tags cannot have a namespace (\(namespace)).")
@@ -68,9 +120,16 @@ public struct NSID: Hashable, Comparable, CustomStringConvertible, Sendable {
         self.namespace = namespace
     }
     
-    /// Internal initializer for pre-validated NSIDs.
-    /// Used by Call and other internal types that construct NSIDs from known-valid strings.
-    internal init(_ name: String, namespace: String, validated: Bool) {
+    /// Initializer for pre-validated NSIDs.
+    ///
+    /// - Warning: This bypasses validation entirely. Only use when you are certain
+    ///   the name and namespace are valid Ki identifiers.
+    ///
+    /// - Parameters:
+    ///   - name: The name component (assumed valid)
+    ///   - namespace: The namespace component (assumed valid)
+    ///   - validated: Must be `true` to use this initializer
+    public init(_ name: String, namespace: String, validated: Bool) {
         self.name = name
         self.namespace = namespace
     }
@@ -89,6 +148,8 @@ public struct NSID: Hashable, Comparable, CustomStringConvertible, Sendable {
     
     /// Parse a "namespace:name" or "name" string into an NSID.
     ///
+    /// Use this method when parsing user or external input at runtime.
+    ///
     /// - Parameter text: The string to parse
     /// - Returns: The parsed NSID
     /// - Throws: `ParseError` if the text is not a valid NSID
@@ -106,9 +167,9 @@ public struct NSID: Hashable, Comparable, CustomStringConvertible, Sendable {
         if let colonIndex = text.firstIndex(of: ":") {
             let namespace = String(text[..<colonIndex])
             let name = String(text[text.index(after: colonIndex)...])
-            return try NSID(name, namespace: namespace)
+            return try NSID(validating: name, namespace: namespace)
         } else {
-            return try NSID(text)
+            return try NSID(validating: text)
         }
     }
     

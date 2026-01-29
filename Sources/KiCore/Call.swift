@@ -38,6 +38,9 @@ import Foundation
 ///     .withValue("GET")
 ///     .withValue("/api/users")
 ///     .withAttribute("timeout", value: 30)
+///
+/// // For validating user input at runtime
+/// let userCall = Call(validating: userInput)
 /// ```
 ///
 /// ## Subscript Access
@@ -56,7 +59,7 @@ import Foundation
 ///
 /// - Note: Call parsing requires the full KD value parser, which is implemented
 ///   in Ki.KD rather than Ki.Core.
-open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
+open class Call: CustomStringConvertible, Hashable {
     
     // MARK: - Properties
     
@@ -69,27 +72,11 @@ open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
     /// Convenience property for the namespace component of the NSID.
     public var namespace: String { nsid.namespace }
     
-    // Backing storage for lazy initialization
-    private var _values: [Any?]?
-    private var _attributes: [NSID: Any?]?
+    /// The indexed arguments (values).
+    public var values: [Any?] = []
     
-    /// The indexed arguments (values). Lazily initialized on first access.
-    public var values: [Any?] {
-        get {
-            if _values == nil { _values = [] }
-            return _values!
-        }
-        set { _values = newValue }
-    }
-    
-    /// The named arguments (attributes). Lazily initialized on first access.
-    public var attributes: [NSID: Any?] {
-        get {
-            if _attributes == nil { _attributes = [:] }
-            return _attributes!
-        }
-        set { _attributes = newValue }
-    }
+    /// The named arguments (attributes).
+    public var attributes: [NSID: Any?] = [:]
     
     // MARK: - Initialization
     
@@ -99,95 +86,117 @@ open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
     }
     
     /// Creates a Call with a name and optional namespace.
+    ///
+    /// - Precondition: The name and namespace must be valid Ki identifiers.
+    ///   For runtime validation of user input, use `init(validating:namespace:)`.
+    public convenience init(_ name: String, namespace: String = "") {
+        self.init(NSID(name, namespace: namespace))
+    }
+    
+    /// Creates a Call with a name and optional namespace, validating the input.
+    ///
+    /// Use this initializer when you need to validate user or external input at runtime.
+    ///
+    /// - Parameters:
+    ///   - name: The name to validate and use
+    ///   - namespace: The namespace to validate and use (default: empty string)
     /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
-    public convenience init(_ name: String, namespace: String = "") throws {
-        self.init(try NSID(name, namespace: namespace))
+    public convenience init(validating name: String, namespace: String = "") throws {
+        self.init(try NSID(validating: name, namespace: namespace))
     }
     
     /// Creates a Call with an NSID and values.
     public convenience init(_ nsid: NSID, values: [Any?]) {
         self.init(nsid)
-        if !values.isEmpty {
-            self._values = values
-        }
+        self.values = values
     }
     
     /// Creates a Call with a name and values.
+    ///
+    /// - Precondition: The name and namespace must be valid Ki identifiers.
+    public convenience init(_ name: String, namespace: String = "", values: [Any?]) {
+        self.init(NSID(name, namespace: namespace), values: values)
+    }
+    
+    /// Creates a Call with a name and values, validating the input.
+    ///
     /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
-    public convenience init(_ name: String, namespace: String = "", values: [Any?]) throws {
-        self.init(try NSID(name, namespace: namespace), values: values)
+    public convenience init(validating name: String, namespace: String = "", values: [Any?]) throws {
+        self.init(try NSID(validating: name, namespace: namespace), values: values)
     }
     
     /// Creates a Call with an NSID and attributes.
     public convenience init(_ nsid: NSID, attributes: [NSID: Any?]) {
         self.init(nsid)
-        if !attributes.isEmpty {
-            self._attributes = attributes
-        }
+        self.attributes = attributes
     }
     
     /// Creates a Call with a name and attributes.
+    ///
+    /// - Precondition: The name and namespace must be valid Ki identifiers.
+    public convenience init(_ name: String, namespace: String = "", attributes: [NSID: Any?]) {
+        self.init(NSID(name, namespace: namespace), attributes: attributes)
+    }
+    
+    /// Creates a Call with a name and attributes, validating the input.
+    ///
     /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
-    public convenience init(_ name: String, namespace: String = "", attributes: [NSID: Any?]) throws {
-        self.init(try NSID(name, namespace: namespace), attributes: attributes)
+    public convenience init(validating name: String, namespace: String = "", attributes: [NSID: Any?]) throws {
+        self.init(try  NSID(validating: name, namespace: namespace), attributes: attributes)
     }
     
     /// Creates a Call with an NSID, values, and attributes.
     public convenience init(_ nsid: NSID, values: [Any?], attributes: [NSID: Any?]) {
         self.init(nsid)
-        if !values.isEmpty {
-            self._values = values
-        }
-        if !attributes.isEmpty {
-            self._attributes = attributes
-        }
+        self.values = values
+        self.attributes = attributes
     }
     
     /// Creates a Call with a name, values, and attributes.
-    /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
+    ///
+    /// - Precondition: The name and namespace must be valid Ki identifiers.
     public convenience init(
         _ name: String,
         namespace: String = "",
         values: [Any?],
         attributes: [NSID: Any?]
+    ) {
+        self.init(NSID(name, namespace: namespace), values: values, attributes: attributes)
+    }
+    
+    /// Creates a Call with a name, values, and attributes, validating the input.
+    ///
+    /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
+    public convenience init(
+        validating name: String,
+        namespace: String = "",
+        values: [Any?],
+        attributes: [NSID: Any?]
     ) throws {
-        self.init(try NSID(name, namespace: namespace), values: values, attributes: attributes)
+        self.init(try NSID(validating: name, namespace: namespace), values: values, attributes: attributes)
     }
     
-    // MARK: - ExpressibleByStringLiteral
-
-    /// Creates a Call from a string literal (uses the string as the name).
-    /// - Note: String literals must be valid Ki identifiers; invalid literals will crash.
-    public required convenience init(stringLiteral value: String) {
-        // Safe to use try! for string literals since they should be valid identifiers
-        // If a literal is invalid, it's a programmer error
-        try! self.init(value)
-    }
     
-    // MARK: - State Queries (Non-initializing)
+    // MARK: - State Queries
     
     /// Returns true if this Call has any values.
-    /// Does not trigger lazy initialization.
     public func hasValues() -> Bool {
-        _values?.isEmpty == false
+        !values.isEmpty
     }
     
     /// Returns true if this Call has any attributes.
-    /// Does not trigger lazy initialization.
     public func hasAttributes() -> Bool {
-        _attributes?.isEmpty == false
+        !attributes.isEmpty
     }
     
-    /// Returns the number of values, or 0 if none.
-    /// Does not trigger lazy initialization.
+    /// Returns the number of values.
     public var valueCount: Int {
-        _values?.count ?? 0
+        values.count
     }
     
-    /// Returns the number of attributes, or 0 if none.
-    /// Does not trigger lazy initialization.
+    /// Returns the number of attributes.
     public var attributeCount: Int {
-        _attributes?.count ?? 0
+        attributes.count
     }
     
     // MARK: - Value Access
@@ -196,11 +205,10 @@ open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
     /// Returns nil if no values are present.
     public var value: Any? {
         get {
-            guard valueCount > 0 else { return nil }
-            return values[0]
+            values.isEmpty ? nil : values[0]
         }
         set {
-            if valueCount == 0 {
+            if values.isEmpty {
                 values.append(newValue)
             } else {
                 values[0] = newValue
@@ -210,10 +218,10 @@ open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
     
     /// Returns true if a value exists at the given index.
     public func hasValue(at index: Int) -> Bool {
-        index >= 0 && index < valueCount
+        index >= 0 && index < values.count
     }
     
-    /// Gets a value at the given index, or returns the default if out of bounds.
+    /// Gets a value at the given index, or returns the default if out of bounds or wrong type.
     public func getValue<T>(at index: Int, default defaultValue: T) -> T {
         guard hasValue(at: index), let value = values[index] as? T else {
             return defaultValue
@@ -229,21 +237,30 @@ open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
     
     /// Subscript access to values by index.
     public subscript(index: Int) -> Any? {
-        get { values[index] }
-        set { values[index] = newValue }
+        get {
+            guard index >= 0 && index < values.count else {
+                fatalError("Index \(index) out of bounds for values array (count: \(values.count))")
+            }
+            return values[index]
+        }
+        set {
+            guard index >= 0 && index < values.count else {
+                fatalError("Index \(index) out of bounds for values array (count: \(values.count))")
+            }
+            values[index] = newValue
+        }
     }
     
     // MARK: - Attribute Access
     
     /// Returns true if an attribute exists with the given NSID.
     public func hasAttribute(_ nsid: NSID) -> Bool {
-        _attributes?.keys.contains(nsid) == true
+        attributes.keys.contains(nsid)
     }
     
     /// Returns true if an attribute exists with the given name and namespace.
-    /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
-    public func hasAttribute(_ name: String, namespace: String = "") throws -> Bool {
-        hasAttribute(try NSID(name, namespace: namespace))
+    public func hasAttribute(_ name: String, namespace: String = "") -> Bool {
+        hasAttribute(NSID(name, namespace: namespace))
     }
     
     /// Sets an attribute with the given NSID.
@@ -255,42 +272,38 @@ open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
     }
     
     /// Sets an attribute with the given name and namespace.
-    /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
     @discardableResult
-    public func setAttribute(_ name: String, namespace: String = "", value: Any?) throws -> Any? {
-        setAttribute(try NSID(name, namespace: namespace), value: value)
+    public func setAttribute(_ name: String, namespace: String = "", value: Any?) -> Any? {
+        setAttribute(NSID(name, namespace: namespace), value: value)
     }
     
     /// Gets an attribute with the given NSID.
     public func getAttribute<T>(_ nsid: NSID) -> T? {
-        _attributes?[nsid] as? T
+        attributes[nsid] as? T
     }
     
     /// Gets an attribute with the given name and namespace.
-    /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
-    public func getAttribute<T>(_ name: String, namespace: String = "") throws -> T? {
-        getAttribute(try NSID(name, namespace: namespace))
+    public func getAttribute<T>(_ name: String, namespace: String = "") -> T? {
+        getAttribute(NSID(name, namespace: namespace))
     }
     
     /// Gets an attribute with the given NSID, or returns the default if not found.
     public func getAttribute<T>(_ nsid: NSID, default defaultValue: T) -> T {
-        guard let value = _attributes?[nsid] as? T else {
+        guard let value = attributes[nsid] as? T else {
             return defaultValue
         }
         return value
     }
     
     /// Gets an attribute with the given name, or returns the default if not found.
-    /// - Throws: `ParseError` if the name or namespace is not a valid Ki identifier
-    public func getAttribute<T>(_ name: String, namespace: String = "", default defaultValue: T) throws -> T {
-        getAttribute(try NSID(name, namespace: namespace), default: defaultValue)
+    public func getAttribute<T>(_ name: String, namespace: String = "", default defaultValue: T) -> T {
+        getAttribute(NSID(name, namespace: namespace), default: defaultValue)
     }
     
     /// Returns all attributes in the given namespace as a dictionary of name to value.
     public func getAttributes<T>(inNamespace namespace: String) -> [String: T] {
-        guard let attrs = _attributes else { return [:] }
         var result: [String: T] = [:]
-        for (nsid, value) in attrs {
+        for (nsid, value) in attributes {
             if nsid.namespace == namespace, let typedValue = value as? T {
                 result[nsid.name] = typedValue
             }
@@ -300,21 +313,19 @@ open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
     
     /// Subscript access to attributes by NSID.
     public subscript(nsid: NSID) -> Any? {
-        get { _attributes?[nsid] ?? nil }
+        get { attributes[nsid] ?? nil }
         set { setAttribute(nsid, value: newValue) }
     }
     
     /// Subscript access to attributes by name.
-    /// - Note: Assumes the name is a valid Ki identifier.
     public subscript(name: String) -> Any? {
-        get { _attributes?[NSID(name, namespace: "", validated: true)] ?? nil }
+        get { attributes[NSID(name, namespace: "", validated: true)] ?? nil }
         set { setAttribute(NSID(name, namespace: "", validated: true), value: newValue) }
     }
     
     /// Subscript access to attributes by name and namespace.
-    /// - Note: Assumes the name and namespace are valid Ki identifiers.
     public subscript(name: String, namespace: String) -> Any? {
-        get { _attributes?[NSID(name, namespace: namespace, validated: true)] ?? nil }
+        get { attributes[NSID(name, namespace: namespace, validated: true)] ?? nil }
         set { setAttribute(NSID(name, namespace: namespace, validated: true), value: newValue) }
     }
     
@@ -329,15 +340,12 @@ open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
     
     /// Adds multiple values and returns this Call for chaining.
     @discardableResult
-    public func withValues(_ values: Any?...) -> Self {
-        for v in values {
-            self.values.append(v)
-        }
+    public func withValues(_ newValues: Any?...) -> Self {
+        values.append(contentsOf: newValues)
         return self
     }
     
     /// Sets an attribute and returns this Call for chaining.
-    /// - Note: Assumes the name and namespace are valid Ki identifiers.
     @discardableResult
     public func withAttribute(_ name: String, namespace: String = "", value: Any?) -> Self {
         setAttribute(NSID(name, namespace: namespace, validated: true), value: value)
@@ -353,7 +361,7 @@ open class Call: CustomStringConvertible, Hashable, ExpressibleByStringLiteral {
     
     // MARK: - CustomStringConvertible
     
-    public var description: String {
+    open var description: String {
         if !hasValues() && !hasAttributes() {
             return "\(nsid)()"
         }
@@ -415,3 +423,5 @@ extension Call: Parseable {
         try? parseLiteral(text)
     }
 }
+
+

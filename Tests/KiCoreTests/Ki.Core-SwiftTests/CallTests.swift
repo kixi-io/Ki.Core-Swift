@@ -20,7 +20,7 @@ struct CallTests {
         
         @Test("Create Call with NSID")
         func createWithNSID() throws {
-            let nsid = try NSID("example")
+            let nsid = NSID("example")
             let call = Call(nsid)
             
             #expect(call.nsid == nsid)
@@ -32,7 +32,7 @@ struct CallTests {
         
         @Test("Create Call with namespaced NSID")
         func createWithNamespacedNSID() throws {
-            let nsid = try NSID("tag", namespace: "my")
+            let nsid = NSID("tag", namespace: "my")
             let call = Call(nsid)
             
             #expect(call.nsid == nsid)
@@ -50,7 +50,7 @@ struct CallTests {
         
         @Test("Create Call with name and namespace")
         func createWithNameAndNamespace() throws {
-            let call = try Call("process", namespace: "api")
+            let call = Call("process", namespace: "api")
             
             #expect(call.name == "process")
             #expect(call.namespace == "api")
@@ -58,7 +58,7 @@ struct CallTests {
         
         @Test("Create Call with NSID and values")
         func createWithNSIDAndValues() throws {
-            let nsid = try NSID("add")
+            let nsid = NSID("add")
             let values: [Any?] = [1, 2, 3]
             let call = Call(nsid, values: values)
             
@@ -73,7 +73,7 @@ struct CallTests {
         @Test("Create Call with name and values")
         func createWithNameAndValues() throws {
             let values: [Any?] = [10, 20]
-            let call = try Call("sum", values: values)
+            let call = Call("sum", values: values)
             
             #expect(call.name == "sum")
             #expect(call.hasValues())
@@ -83,7 +83,7 @@ struct CallTests {
         @Test("Create Call with empty values array does not initialize values")
         func createWithEmptyValues() throws {
             let emptyValues: [Any?] = []
-            let call = try Call("empty", values: emptyValues)
+            let call = Call("empty", values: emptyValues)
             
             #expect(!call.hasValues())
             #expect(call.valueCount == 0)
@@ -91,8 +91,8 @@ struct CallTests {
         
         @Test("Create Call with NSID and attributes")
         func createWithNSIDAndAttributes() throws {
-            let nsid = try NSID("config")
-            let debugAttr = try NSID("debug")
+            let nsid = NSID("config")
+            let debugAttr = NSID("debug")
             let attrs: [NSID: Any?] = [debugAttr: true]
             let call = Call(nsid, attributes: attrs)
             
@@ -103,9 +103,9 @@ struct CallTests {
         
         @Test("Create Call with name and attributes")
         func createWithNameAndAttributes() throws {
-            let levelAttr = try NSID("level")
+            let levelAttr = NSID("level")
             let attrs: [NSID: Any?] = [levelAttr: 5]
-            let call = try Call("settings", attributes: attrs)
+            let call = Call("settings", attributes: attrs)
             
             #expect(call.name == "settings")
             #expect(call.hasAttributes())
@@ -115,7 +115,7 @@ struct CallTests {
         @Test("Create Call with empty attributes does not initialize attributes")
         func createWithEmptyAttributes() throws {
             let emptyAttrs: [NSID: Any?] = [:]
-            let call = try Call("noAttrs", attributes: emptyAttrs)
+            let call = Call("noAttrs", attributes: emptyAttrs)
             
             #expect(!call.hasAttributes())
             #expect(call.attributeCount == 0)
@@ -123,8 +123,8 @@ struct CallTests {
         
         @Test("Create Call with NSID, values, and attributes")
         func createWithNSIDValuesAndAttributes() throws {
-            let nsid = try NSID("request")
-            let timeoutAttr = try NSID("timeout")
+            let nsid = NSID("request")
+            let timeoutAttr = NSID("timeout")
             let getStr: String = "GET"
             let apiStr: String = "/api"
             let values: [Any?] = [getStr, apiStr]
@@ -140,11 +140,11 @@ struct CallTests {
         
         @Test("Create Call with name, values, and attributes")
         func createWithNameValuesAndAttributes() throws {
-            let urgentAttr = try NSID("urgent")
+            let urgentAttr = NSID("urgent")
             let itemStr: String = "item"
             let values: [Any?] = [itemStr, 5]
             let attrs: [NSID: Any?] = [urgentAttr: true]
-            let call = try Call("create",
+            let call = Call("create",
                                values: values,
                                attributes: attrs)
             
@@ -155,11 +155,11 @@ struct CallTests {
         
         @Test("Create Call with namespace, values, and attributes")
         func createWithNamespaceValuesAndAttributes() throws {
-            let idAttr = try NSID("id")
+            let idAttr = NSID("id")
             let v1: String = "/users"
             let values: [Any?] = [v1]
             let attrs: [NSID: Any?] = [idAttr: 123]
-            let call = try Call("fetch",
+            let call = Call("fetch",
                                namespace: "api",
                                values: values,
                                attributes: attrs)
@@ -172,17 +172,15 @@ struct CallTests {
         
         @Test("Invalid name throws ParseError")
         func invalidNameThrows() throws {
-            #expect(throws: (any Error).self) {
-                // try Call("123invalid")
-                let invalidName: String = "123invalid"
-                try Call(invalidName)
+            #expect(throws: ParseError.self) {
+                try Call(validating: "123invalid")
             }
         }
         
         @Test("Invalid namespace throws ParseError")
         func invalidNamespaceThrows() throws {
-            #expect(throws: (any Error).self) {
-                try Call("valid", namespace: "123invalid")
+            #expect(throws: ParseError.self) {
+                try Call(validating: "valid", namespace: "123invalid")
             }
         }
     }
@@ -194,7 +192,7 @@ struct CallTests {
         
         @Test("Create Call from string literal")
         func createFromStringLiteral() {
-            let call: Call = "myCall"
+            let call = Call("myCall")
             
             #expect(call.name == "myCall")
             #expect(call.namespace == "")
@@ -202,7 +200,7 @@ struct CallTests {
         
         @Test("String literal Call has no values or attributes")
         func stringLiteralHasNoValuesOrAttributes() {
-            let call: Call = "simple"
+            let call = Call("simple")
             
             #expect(!call.hasValues())
             #expect(!call.hasAttributes())
@@ -251,7 +249,7 @@ struct CallTests {
             let v1: String = "first"
             let v2: String = "second"
             let values: [Any?] = [v1, v2]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             #expect(call.value as? String == "first")
         }
@@ -278,7 +276,7 @@ struct CallTests {
             let v1: String = "original"
             let v2: String = "second"
             let values: [Any?] = [v1, v2]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             let replacedStr: String = "replaced"
             call.value = replacedStr
             
@@ -290,7 +288,7 @@ struct CallTests {
         @Test("hasValue(at:) returns correct values")
         func hasValueAt() throws {
             let values: [Any?] = [1, 2, 3]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             #expect(call.hasValue(at: 0))
             #expect(call.hasValue(at: 1))
@@ -302,7 +300,7 @@ struct CallTests {
         @Test("getValue(at:default:) returns value when present")
         func getValueWithDefaultReturnsValue() throws {
             let values: [Any?] = [42]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             let result: Int = call.getValue(at: 0, default: 0)
             #expect(result == 42)
@@ -311,7 +309,7 @@ struct CallTests {
         @Test("getValue(at:default:) returns default when missing")
         func getValueWithDefaultReturnsDefault() throws {
             let emptyValues: [Any?] = []
-            let call = try Call("test", values: emptyValues)
+            let call = Call("test", values: emptyValues)
             
             let result: Int = call.getValue(at: 0, default: 99)
             #expect(result == 99)
@@ -321,7 +319,7 @@ struct CallTests {
         func getValueWithDefaultReturnsDefaultForWrongType() throws {
             let notAnInt: String = "not an int"
             let values: [Any?] = [notAnInt]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             let result: Int = call.getValue(at: 0, default: 99)
             #expect(result == 99)
@@ -331,7 +329,7 @@ struct CallTests {
         func getValueOptionalReturnsValue() throws {
             let helloStr: String = "hello"
             let values: [Any?] = [helloStr]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             let result: String? = call.getValue(at: 0)
             #expect(result == "hello")
@@ -348,7 +346,7 @@ struct CallTests {
         @Test("Subscript access to values by index")
         func subscriptByIndex() throws {
             let values: [Any?] = [1, 2, 3]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             #expect(call[0] as? Int == 1)
             #expect(call[1] as? Int == 2)
@@ -358,7 +356,7 @@ struct CallTests {
         @Test("Subscript setter modifies values")
         func subscriptSetterModifiesValues() throws {
             let values: [Any?] = [1, 2, 3]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             call[1] = 20
             
             #expect(call[1] as? Int == 20)
@@ -367,7 +365,7 @@ struct CallTests {
         @Test("Values can contain nil")
         func valuesCanContainNil() throws {
             let values: [Any?] = [1, nil, 3]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             #expect(call.valueCount == 3)
             #expect(call[0] as? Int == 1)
@@ -379,7 +377,7 @@ struct CallTests {
         func valuesCanContainMixedTypes() throws {
             let twoStr: String = "two"
             let values: [Any?] = [1, twoStr, 3.0, true]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             #expect(call.valueCount == 4)
             #expect(call[0] as? Int == 1)
@@ -396,19 +394,19 @@ struct CallTests {
         
         @Test("hasAttribute with NSID returns correct value")
         func hasAttributeWithNSID() throws {
-            let debugAttr = try NSID("debug")
+            let debugAttr = NSID("debug")
             let attrs: [NSID: Any?] = [debugAttr: true]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             #expect(call.hasAttribute(debugAttr))
-            #expect(!call.hasAttribute(try NSID("missing")))
+            #expect(!call.hasAttribute(NSID("missing")))
         }
         
         @Test("hasAttribute with name returns correct value")
         func hasAttributeWithName() throws {
-            let debugAttr = try NSID("debug")
+            let debugAttr = NSID("debug")
             let attrs: [NSID: Any?] = [debugAttr: true]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             #expect(try call.hasAttribute("debug"))
             #expect(try !call.hasAttribute("missing"))
@@ -416,10 +414,10 @@ struct CallTests {
         
         @Test("hasAttribute with name and namespace")
         func hasAttributeWithNameAndNamespace() throws {
-            let nsAttr = try NSID("setting", namespace: "config")
+            let nsAttr = NSID("setting", namespace: "config")
             let valueStr: String = "value"
             let attrs: [NSID: Any?] = [nsAttr: valueStr]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             #expect(try call.hasAttribute("setting", namespace: "config"))
             #expect(try !call.hasAttribute("setting", namespace: ""))
@@ -429,7 +427,7 @@ struct CallTests {
         @Test("setAttribute with NSID sets and returns old value")
         func setAttributeWithNSID() throws {
             let call = Call("test")
-            let attr = try NSID("key")
+            let attr = NSID("key")
             
             let firstStr: String = "first"
             let old1 = call.setAttribute(attr, value: firstStr)
@@ -461,9 +459,9 @@ struct CallTests {
         
         @Test("getAttribute with NSID returns value")
         func getAttributeWithNSID() throws {
-            let attr = try NSID("count")
+            let attr = NSID("count")
             let attrs: [NSID: Any?] = [attr: 42]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             let result: Int? = call.getAttribute(attr)
             #expect(result == 42)
@@ -473,16 +471,16 @@ struct CallTests {
         func getAttributeWithNSIDReturnsNilWhenMissing() throws {
             let call = Call("test")
             
-            let result: Int? = call.getAttribute(try NSID("missing"))
+            let result: Int? = call.getAttribute(NSID("missing"))
             #expect(result == nil)
         }
         
         @Test("getAttribute with name returns value")
         func getAttributeWithName() throws {
-            let attr = try NSID("name")
+            let attr = NSID("name")
             let johnStr: String = "John"
             let attrs: [NSID: Any?] = [attr: johnStr]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             let result: String? = try call.getAttribute("name")
             #expect(result == "John")
@@ -490,9 +488,9 @@ struct CallTests {
         
         @Test("getAttribute with default returns value when present")
         func getAttributeWithDefaultReturnsValue() throws {
-            let attr = try NSID("level")
+            let attr = NSID("level")
             let attrs: [NSID: Any?] = [attr: 5]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             let result: Int = call.getAttribute(attr, default: 1)
             #expect(result == 5)
@@ -502,7 +500,7 @@ struct CallTests {
         func getAttributeWithDefaultReturnsDefaultWhenMissing() throws {
             let call = Call("test")
             
-            let result: Int = call.getAttribute(try NSID("level"), default: 1)
+            let result: Int = call.getAttribute(NSID("level"), default: 1)
             #expect(result == 1)
         }
         
@@ -516,10 +514,10 @@ struct CallTests {
         
         @Test("getAttributes(inNamespace:) filters by namespace")
         func getAttributesInNamespace() throws {
-            let attr1 = try NSID("setting1", namespace: "config")
-            let attr2 = try NSID("setting2", namespace: "config")
-            let attr3 = try NSID("other", namespace: "other")
-            let attr4 = try NSID("noNamespace")
+            let attr1 = NSID("setting1", namespace: "config")
+            let attr2 = NSID("setting2", namespace: "config")
+            let attr3 = NSID("other", namespace: "other")
+            let attr4 = NSID("noNamespace")
             
             let v1: String = "value1"
             let v2: String = "value2"
@@ -531,7 +529,7 @@ struct CallTests {
                 attr3: v3,
                 attr4: v4
             ]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             let configAttrs: [String: String] = call.getAttributes(inNamespace: "config")
             
@@ -542,10 +540,10 @@ struct CallTests {
         
         @Test("getAttributes(inNamespace:) returns empty for no matches")
         func getAttributesInNamespaceReturnsEmptyForNoMatches() throws {
-            let attr = try NSID("key")
+            let attr = NSID("key")
             let valueStr: String = "value"
             let attrs: [NSID: Any?] = [attr: valueStr]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             let result: [String: String] = call.getAttributes(inNamespace: "nonexistent")
             #expect(result.isEmpty)
@@ -553,17 +551,17 @@ struct CallTests {
         
         @Test("Subscript access by NSID")
         func subscriptByNSID() throws {
-            let attr = try NSID("key")
+            let attr = NSID("key")
             let valueStr: String = "value"
             let attrs: [NSID: Any?] = [attr: valueStr]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             #expect(call[attr] as? String == "value")
         }
         
         @Test("Subscript setter by NSID")
         func subscriptSetterByNSID() throws {
-            let attr = try NSID("key")
+            let attr = NSID("key")
             let call = Call("test")
             
             let newValueStr: String = "newValue"
@@ -574,9 +572,9 @@ struct CallTests {
         
         @Test("Subscript access by name")
         func subscriptByName() throws {
-            let attr = try NSID("key")
+            let attr = NSID("key")
             let attrs: [NSID: Any?] = [attr: 42]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             #expect(call["key"] as? Int == 42)
         }
@@ -593,9 +591,9 @@ struct CallTests {
         
         @Test("Subscript access by name and namespace")
         func subscriptByNameAndNamespace() throws {
-            let attr = try NSID("setting", namespace: "config")
+            let attr = NSID("setting", namespace: "config")
             let attrs: [NSID: Any?] = [attr: true]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             #expect(call["setting", "config"] as? Bool == true)
         }
@@ -611,9 +609,9 @@ struct CallTests {
         
         @Test("Attributes can contain nil values")
         func attributesCanContainNil() throws {
-            let attr = try NSID("nullable")
+            let attr = NSID("nullable")
             let attrs: [NSID: Any?] = [attr: nil]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             #expect(call.hasAttribute(attr))
             #expect(call[attr] == nil)
@@ -682,7 +680,7 @@ struct CallTests {
         
         @Test("withAttribute with NSID")
         func withAttributeWithNSID() throws {
-            let attr = try NSID("key")
+            let attr = NSID("key")
             let call = Call("test")
                 .withAttribute(attr, value: 42)
             
@@ -693,8 +691,8 @@ struct CallTests {
         func complexFluentChaining() throws {
             let getStr: String = "GET"
             let apiUsersStr: String = "/api/users"
-            let timeoutAttr = try NSID("timeout")
-            let retryAttr = try NSID("retry")
+            let timeoutAttr = NSID("timeout")
+            let retryAttr = NSID("retry")
             let call = Call("request")
                 .withValue(getStr)
                 .withValue(apiUsersStr)
@@ -725,7 +723,7 @@ struct CallTests {
         
         @Test("Description for namespaced Call")
         func descriptionForNamespacedCall() throws {
-            let call = try Call("action", namespace: "ns")
+            let call = Call("action", namespace: "ns")
             
             #expect(call.description == "ns:action()")
         }
@@ -733,7 +731,7 @@ struct CallTests {
         @Test("Description with values")
         func descriptionWithValues() throws {
             let values: [Any?] = [1, 2, 3]
-            let call = try Call("add", values: values)
+            let call = Call("add", values: values)
             
             #expect(call.description == "add(1, 2, 3)")
         }
@@ -743,7 +741,7 @@ struct CallTests {
             let helloStr: String = "hello"
             let worldStr: String = "world"
             let values: [Any?] = [helloStr, worldStr]
-            let call = try Call("greet", values: values)
+            let call = Call("greet", values: values)
             
             #expect(call.description == "greet(\"hello\", \"world\")")
         }
@@ -751,7 +749,7 @@ struct CallTests {
         @Test("Description with nil value")
         func descriptionWithNilValue() throws {
             let values: [Any?] = [1, nil, 3]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             #expect(call.description == "test(1, nil, 3)")
         }
@@ -759,16 +757,16 @@ struct CallTests {
         @Test("Description with boolean values")
         func descriptionWithBooleanValues() throws {
             let values: [Any?] = [true, false]
-            let call = try Call("flags", values: values)
+            let call = Call("flags", values: values)
             
             #expect(call.description == "flags(true, false)")
         }
         
         @Test("Description with attributes")
         func descriptionWithAttributes() throws {
-            let debugAttr = try NSID("debug")
+            let debugAttr = NSID("debug")
             let attrs: [NSID: Any?] = [debugAttr: true]
-            let call = try Call("config", attributes: attrs)
+            let call = Call("config", attributes: attrs)
             
             // Note: attribute order in dictionary may vary
             let configStr: String = "config("
@@ -781,9 +779,9 @@ struct CallTests {
         
         @Test("Description with namespaced attribute")
         func descriptionWithNamespacedAttribute() throws {
-            let attr = try NSID("setting", namespace: "cfg")
+            let attr = NSID("setting", namespace: "cfg")
             let attrs: [NSID: Any?] = [attr: 5]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             let namespacedStr: String = "cfg:setting=5"
             let containsNamespaced: Bool = call.description.contains(namespacedStr)
@@ -792,11 +790,11 @@ struct CallTests {
         
         @Test("Description with values and attributes")
         func descriptionWithValuesAndAttributes() throws {
-            let urgentAttr = try NSID("urgent")
+            let urgentAttr = NSID("urgent")
             let itemStr: String = "item"
             let values: [Any?] = [itemStr]
             let attrs: [NSID: Any?] = [urgentAttr: true]
-            let call = try Call("create", values: values, attributes: attrs)
+            let call = Call("create", values: values, attributes: attrs)
             
             // Values come before attributes
             let createStr: String = "create("
@@ -819,8 +817,8 @@ struct CallTests {
         @Test("Equal Calls are equal")
         func equalCallsAreEqual() throws {
             let values: [Any?] = [1, 2, 3]
-            let call1 = try Call("test", values: values)
-            let call2 = try Call("test", values: values)
+            let call1 = Call("test", values: values)
+            let call2 = Call("test", values: values)
             
             #expect(call1 == call2)
         }
@@ -837,19 +835,19 @@ struct CallTests {
         func differentValuesNotEqual() throws {
             let values1: [Any?] = [1, 2]
             let values2: [Any?] = [1, 3]
-            let call1 = try Call("test", values: values1)
-            let call2 = try Call("test", values: values2)
+            let call1 = Call("test", values: values1)
+            let call2 = Call("test", values: values2)
             
             #expect(call1 != call2)
         }
         
         @Test("Different attributes are not equal")
         func differentAttributesNotEqual() throws {
-            let attr = try NSID("key")
+            let attr = NSID("key")
             let attrs1: [NSID: Any?] = [attr: 1]
             let attrs2: [NSID: Any?] = [attr: 2]
-            let call1 = try Call("test", attributes: attrs1)
-            let call2 = try Call("test", attributes: attrs2)
+            let call1 = Call("test", attributes: attrs1)
+            let call2 = Call("test", attributes: attrs2)
             
             #expect(call1 != call2)
         }
@@ -857,8 +855,8 @@ struct CallTests {
         @Test("Equal Calls have equal hash values")
         func equalCallsHaveEqualHashes() throws {
             let values: [Any?] = [1, 2]
-            let call1 = try Call("test", values: values)
-            let call2 = try Call("test", values: values)
+            let call1 = Call("test", values: values)
+            let call2 = Call("test", values: values)
             
             #expect(call1.hashValue == call2.hashValue)
         }
@@ -867,9 +865,9 @@ struct CallTests {
         func callsWorkInSet() throws {
             let values1: [Any?] = [1]
             let values2: [Any?] = [2]
-            let call1 = try Call("test", values: values1)
-            let call2 = try Call("test", values: values2)
-            let call3 = try Call("test", values: values1)  // Duplicate of call1
+            let call1 = Call("test", values: values1)
+            let call2 = Call("test", values: values2)
+            let call3 = Call("test", values: values1)  // Duplicate of call1
             
             let set: Set<Call> = [call1, call2, call3]
             
@@ -925,7 +923,7 @@ struct CallTests {
         
         @Test("Attributes dictionary can be set directly")
         func attributesCanBeSetDirectly() throws {
-            let attr = try NSID("key")
+            let attr = NSID("key")
             let call = Call("test")
             let valueStr: String = "value"
             let newAttrs: [NSID: Any?] = [attr: valueStr]
@@ -937,7 +935,7 @@ struct CallTests {
         @Test("NSID property can be changed")
         func nsidCanBeChanged() throws {
             let call = Call("original")
-            call.nsid = try NSID("modified", namespace: "ns")
+            call.nsid = NSID("modified", namespace: "ns")
             
             #expect(call.name == "modified")
             #expect(call.namespace == "ns")
@@ -947,7 +945,7 @@ struct CallTests {
         func valuesSupportURL() throws {
             let url = URL(string: "https://example.com")!
             let values: [Any?] = [url]
-            let call = try Call("fetch", values: values)
+            let call = Call("fetch", values: values)
             
             #expect(call[0] as? URL == url)
         }
@@ -956,7 +954,7 @@ struct CallTests {
         func valuesSupportDecimal() throws {
             let decimal = Decimal(string: "123.456")!
             let values: [Any?] = [decimal]
-            let call = try Call("calc", values: values)
+            let call = Call("calc", values: values)
             
             #expect(call[0] as? Decimal == decimal)
         }
@@ -965,7 +963,7 @@ struct CallTests {
         func valuesSupportArrays() throws {
             let innerArray: [Any?] = [1, 2, 3]
             let values: [Any?] = [innerArray]
-            let call = try Call("test", values: values)
+            let call = Call("test", values: values)
             
             #expect(call.valueCount == 1)
             if let inner = call[0] as? [Any?] {
@@ -977,15 +975,15 @@ struct CallTests {
         
         @Test("Attributes with same name different namespace are distinct")
         func attributesSameNameDifferentNamespace() throws {
-            let attr1 = try NSID("key", namespace: "ns1")
-            let attr2 = try NSID("key", namespace: "ns2")
+            let attr1 = NSID("key", namespace: "ns1")
+            let attr2 = NSID("key", namespace: "ns2")
             let v1: String = "value1"
             let v2: String = "value2"
             let attrs: [NSID: Any?] = [
                 attr1: v1,
                 attr2: v2
             ]
-            let call = try Call("test", attributes: attrs)
+            let call = Call("test", attributes: attrs)
             
             #expect(call.attributeCount == 2)
             #expect(call["key", "ns1"] as? String == "value1")
@@ -1038,7 +1036,7 @@ struct CallTests {
 
             // Designated initializer that calls a designated initializer of Call
             init(name: String, annotation: String? = nil) throws {
-                let nsid = try NSID(name)
+                let nsid = NSID(name)
                 super.init(nsid)
                 self.annotation = annotation
             }
